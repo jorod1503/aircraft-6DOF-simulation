@@ -1,6 +1,6 @@
 import numpy as np
 
-def forward_euler(f, t_s, x, h_s):
+def forward_euler(f, t_s, x, h_s,amod):
 
     '''
     Método de Euler mejorado:
@@ -14,11 +14,9 @@ def forward_euler(f, t_s, x, h_s):
     Respuestas:
         t_s: Vector de puntos en tiempo en el cual las soluciones numéricas fueron aproximadas
         x: Solución numérica aproximada de los datos de la ecuación diferencial f
-
-
     '''
 
     for i in range(1, len(t_s)):
-        x[:,i] = x[:,i-1] + h_s * f(t_s[i-1], x[:,i-1])
+        x[:,i] = x[:,i-1] + h_s * f(t_s[i-1], x[:,i-1],amod)
     
     return t_s, x

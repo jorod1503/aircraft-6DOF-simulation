@@ -1,11 +1,11 @@
 import math
 import numpy as np
 
-def flat_earth_eom(t,x,amod):
+def flat_earth_eom(t, x, amod):
     '''
     Para nombrar las variables se utiliza la siguiente convención: <nombre de la variable>_<sistema de coordenadas si aplica>_<unidades>.
     Por ejemplo, en el pitch rate q en el marco de referencia fijo en el cuerpo bf, con unidades de radianes por segundo sería q_b_rps
-    Argumentos
+    Argumentos:
         t - tiempo [s], escalar
         x - vector de estado en tempo t [diversas unidades], arreglo numpy
             x[0] = u_b_mps, velocidad en x
@@ -26,7 +26,7 @@ def flat_earth_eom(t,x,amod):
         dx - derivada respecto al tiempo para cada estado en x
     '''
     #Pre localización del lado izquierdo de la ecuación
-    dx = np.array((12,1))
+    dx = np.empty((12,),dtype=float)
 
     #Asignación de variables de estado a nombres de variables
     u_b_mps = x[0]
@@ -43,11 +43,11 @@ def flat_earth_eom(t,x,amod):
     p3_n_m = x[11]
 
     #Obtención de momentos de masa e inercia
-    m_kg =  amod([m_kg])
-    Jxz_b_kgm2 = amod([Jxz_b_kgm2])
-    Jxx_b_kgm2 = amod([Jxx_b_kgm2])
-    Jyy_b_kgm2 = amod([Jyy_b_kgm2])
-    Jzz_b_kgm2 = amod([Jzz_b_kgm2])
+    m_kg =  amod["m_kg"]
+    Jxz_b_kgm2 = amod["Jxz_b_kgm2"]
+    Jxx_b_kgm2 = amod["Jxx_b_kgm2"]
+    Jyy_b_kgm2 = amod["Jyy_b_kgm2"]
+    Jzz_b_kgm2 = amod["Jzz_b_kgm2"]
 
     #Cálculo de datos de aire (Mach, altitud, AoA, AoS)
 
@@ -57,19 +57,19 @@ def flat_earth_eom(t,x,amod):
     gz_n_mps2 = 9.81
 
     #Convirtiendo gravedad a sistema de coordenadas fijo en el cuerpo
-    gx_b_mps2 = math.sin(theta_rad) * gz_n_mps2
+    gx_b_mps2 = -math.sin(theta_rad) * gz_n_mps2
     gy_b_mps2 = math.sin(phi_rad) * math.cos(theta_rad) * gz_n_mps2
-    gz_b_mps2 = math.sin(phi_rad) * math.cos(theta_rad) * gz_n_mps2
+    gz_b_mps2 = math.cos(phi_rad) * math.cos(theta_rad) * gz_n_mps2
 
     #Fuerzas externas
-    Fx_b_kgmps2 = []
-    Fy_b_kgmps2 = []
-    Fz_b_kgmps2 = []
+    Fx_b_kgmps2 = 0
+    Fy_b_kgmps2 = 0
+    Fz_b_kgmps2 = 0
 
     #Momentos externos
-    l_b_kgm2ps2 = []
-    m_b_kgm2ps2 = []
-    n_b_kgm2ps2 = []
+    l_b_kgm2ps2 = 0
+    m_b_kgm2ps2 = 0
+    n_b_kgm2ps2 = 0
 
     #ecuación del denominador en roll y yaw
     Den = Jxx_b_kgm2 * Jzz_b_kgm2 - Jxz_b_kgm2**2
@@ -99,15 +99,18 @@ def flat_earth_eom(t,x,amod):
             Jxz_b_kgm2 * l_b_kgm2ps2 + \
             Jxz_b_kgm2 * n_b_kgm2ps2)/Den
     
-    #Ecuaciones cinemáticas
-    dx[6] = []
-    dx[7] = []
-    dx[8] = []
+    #Ecuaciones cinemáticas de Euler
+    dx[6] = p_b_rps + math.sin(phi_rad)*math.tan(theta_rad)*q_b_rps + \
+                      math.cos(phi_rad)*math.tan(theta_rad)*r_b_rps 
+    dx[7] = math.cos(phi_rad)*q_b_rps - \
+            math.sin(phi_rad)*r_b_rps
+    dx[8] = math.sin(phi_rad)/math.cos(theta_rad)*q_b_rps + \
+            math.cos(phi_rad)/math.cos(theta_rad)*r_b_rps
 
     #Ecuaciones de posición (navegación)
-    dx[9] = []
-    dx[10] = []
-    dx[11] = []
+    dx[9] = 0
+    dx[10] = 0
+    dx[11] = 0
 
     return dx
 
